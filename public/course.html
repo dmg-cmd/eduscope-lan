@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0f4c81 0%, #1a5a8a 100%);
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            transition: all 0.3s;
+            border-radius: 0;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .course-header-card {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .exam-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .exam-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .exam-status {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-completed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-primary-custom:hover {
+            color: white;
+        }
+        
+        .btn-success-custom {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-warning-custom {
+            background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%);
+            border: none;
+            color: #212529;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <a href="/dashboard" class="text-decoration-none">
+                <h4 class="fw-bold text-white mb-0">
+                    <span>🏫</span> EduScope LAN
+                </h4>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">
+                        <i class="bi bi-house-door"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="bi bi-book"></i> Curso Actual
+                    </a>
+                </li>
+                <li class="nav-item" id="stats-nav-item">
+                    <a class="nav-link" id="stats-link" href="#">
+                        <i class="bi bi-bar-chart"></i> Estadísticas
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <button class="btn btn-light d-md-none">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h5 class="mb-0 fw-bold" id="page-title">Curso</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <div class="d-flex align-items-center gap-2 user-dropdown" data-bs-toggle="dropdown">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="d-none d-md-inline fw-medium" id="user-name">Usuario</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <!-- Course Header -->
+            <div class="course-header-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="fw-bold mb-2" id="course-name">Cargando...</h2>
+                        <p class="mb-0 opacity-75" id="course-code">Código del curso</p>
+                        <p class="mt-2" id="course-description">Descripción del curso</p>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <span class="badge bg-light text-dark" id="teacher-badge">Profesor</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons for Teachers -->
+            <div class="row mb-4" id="teacher-actions" style="display: none;">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex gap-3 flex-wrap">
+                                <button class="btn btn-primary-custom" onclick="showCreateExamModal()">
+                                    <i class="bi bi-plus-lg me-2"></i>Crear Examen
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="showEnrollStudentModal()">
+                                    <i class="bi bi-person-plus me-2"></i>Inscribir Estudiante
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="viewStudents()">
+                                    <i class="bi bi-people me-2"></i>Ver Estudiantes
+                                </button>
+                                <button class="btn btn-outline-info" onclick="viewStats()">
+                                    <i class="bi bi-bar-chart me-2"></i>Estadísticas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exams Section -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">Exámenes y Tareas</h5>
+                    </div>
+                    <div id="exams-list">
+                        <div class="text-center py-5">
+                            <div class="text-muted mb-3" style="font-size: 3rem;">📝</div>
+                            <h6 class="text-muted">Cargando exámenes...</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Exam Modal -->
+    <div class="modal fade" id="create-exam-modal" tabindex="-1" style="overflow-y: auto;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Crear Nuevo Examen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="create-exam-form">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label fw-medium">Título del Examen</label>
+                                <input type="text" class="form-control" id="exam-title" placeholder="Examen Parcial 1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-medium">Duración (minutos)</label>
+                                <input type="number" class="form-control" id="exam-duration" value="60" min="1">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Descripción</label>
+                            <textarea class="form-control" id="exam-description" rows="2" placeholder="Instrucciones generales..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Fecha y Hora de Inicio</label>
+                            <input type="datetime-local" class="form-control" id="exam-start-time">
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Preguntas</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addQuestion()">
+                                <i class="bi bi-plus me-1"></i>Agregar Pregunta
+                            </button>
+                        </div>
+                        
+                        <div id="questions-container">
+                            <!-- Questions will be added here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary-custom">Crear Examen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enroll Student Modal -->
+    <div class="modal fade" id="enroll-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Inscribir Estudiante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="enroll-form">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Correo del Estudiante</label>
+                            <input type="email" class="form-control" id="student-email" placeholder="estudiante@ejemplo.com" required>
+                            <small class="text-muted">El estudiante debe estar registrado en el sistema</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary-custom">Inscribir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let course = null;
+        let exams = [];
+        let questionCount = 0;
+        
+        async function init() {
+            const path = window.location.pathname;
+            const courseId = path.split('/course/')[1];
+            
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (!data.user) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = data.user;
+                document.getElementById('user-name').textContent = currentUser.name;
+                
+                // Load course data
+                await loadCourse(courseId);
+                await loadExams(courseId);
+                
+                // Setup stats link
+                document.getElementById('stats-link').href = `/stats/course/${courseId}`;
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        async function loadCourse(courseId) {
+            try {
+                const response = await fetch('/api/courses');
+                const data = await response.json();
+                course = data.courses.find(c => c.id == courseId);
+                
+                if (!course) {
+                    showAlert('Curso no encontrado', 'danger');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return;
+                }
+                
+                document.getElementById('course-name').textContent = course.name;
+                document.getElementById('course-code').textContent = course.code || '';
+                document.getElementById('course-description').textContent = course.description || 'Sin descripción';
+                document.getElementById('teacher-badge').textContent = course.teacher_name || '';
+                
+                // Show teacher actions if user is teacher
+                if (currentUser.role === 'teacher') {
+                    document.getElementById('teacher-actions').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading course:', error);
+            }
+        }
+        
+        async function loadExams(courseId) {
+            try {
+                const response = await fetch(`/api/courses/${courseId}/exams`);
+                const data = await response.json();
+                exams = data.exams;
+                
+                renderExams();
+            } catch (error) {
+                console.error('Error loading exams:', error);
+            }
+        }
+        
+        function renderExams() {
+            const container = document.getElementById('exams-list');
+            
+            if (exams.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="text-muted mb-3" style="font-size: 3rem;">📝</div>
+                        <h6 class="text-muted">No hay exámenes aún</h6>
+                        <p class="text-muted small">
+                            ${currentUser.role === 'teacher' 
+                                ? 'Crea tu primer examen para comenzar' 
+                                : 'Aún no hay exámenes programados'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Duración</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${exams.map(exam => {
+                                const status = getExamStatus(exam);
+                                return `
+                                    <tr>
+                                        <td>
+                                            <div class="fw-medium">${exam.title}</div>
+                                            <small class="text-muted">${exam.description || ''}</small>
+                                        </td>
+                                        <td>
+                                            <span class="exam-status ${status.class}">${status.text}</span>
+                                        </td>
+                                        <td>${new Date(exam.start_time || exam.created_at).toLocaleDateString()}</td>
+                                        <td>${exam.duration_minutes || 60} min</td>
+                                        <td>
+                                            ${getExamActions(exam)}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function getExamStatus(exam) {
+            const now = new Date();
+            const start = new Date(exam.start_time || exam.created_at);
+            const end = new Date(start.getTime() + (exam.duration_minutes || 60) * 60000);
+            
+            if (exam.submitted_at) {
+                return { text: 'Entregado', class: 'status-completed' };
+            } else if (now < start) {
+                return { text: 'Pendiente', class: 'status-pending' };
+            } else if (now >= start && now <= end) {
+                return { text: 'Activo', class: 'status-active' };
+            } else {
+                return { text: 'Finalizado', class: 'status-completed' };
+            }
+        }
+        
+        function getExamActions(exam) {
+            const status = getExamStatus(exam);
+            
+            if (currentUser.role === 'teacher') {
+                return `
+                    <a href="/exam/${exam.id}/grading" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-check-square"></i> Calificar
+                    </a>
+                `;
+            } else {
+                if (status.text === 'Entregado') {
+                    return `<span class="text-success"><i class="bi bi-check-circle"></i> Completado (${exam.score || 0} pts)</span>`;
+                } else if (status.text === 'Activo' || status.text === 'Pendiente') {
+                    return `
+                        <a href="/exam/${exam.id}" class="btn btn-sm btn-success-custom">
+                            <i class="bi bi-pencil"></i> ${status.text === 'Activo' ? 'Realizar' : 'Ver'}
+                        </a>
+                    `;
+                } else {
+                    return `<span class="text-muted">No disponible</span>`;
+                }
+            }
+        }
+        
+        function showCreateExamModal() {
+            const modal = new bootstrap.Modal(document.getElementById('create-exam-modal'));
+            modal.show();
+            
+            // Add first question
+            if (questionCount === 0) {
+                addQuestion();
+            }
+        }
+        
+        function addQuestion() {
+            questionCount++;
+            const container = document.getElementById('questions-container');
+            const questionHTML = `
+                <div class="card mb-3 question-card" id="question-${questionCount}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h6 class="fw-bold">Pregunta ${questionCount}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(${questionCount})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Pregunta</label>
+                                <select class="form-select question-type" onchange="changeQuestionType(${questionCount})">
+                                    <option value="mcq">Opción Múltiple</option>
+                                    <option value="boolean">Verdadero/Falso</option>
+                                    <option value="number">Numérica</option>
+                                    <option value="text">Respuesta Abierta</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Puntaje Máximo</label>
+                                <input type="number" class="form-control question-score" value="1" min="0.5" step="0.5">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Tema/Tag</label>
+                                <input type="text" class="form-control question-tags" placeholder="álgebra, geometría...">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contenido de la Pregunta</label>
+                            <textarea class="form-control question-content" rows="2" required placeholder="Escribe tu pregunta aquí..."></textarea>
+                        </div>
+                        <div class="question-options-container">
+                            <!-- Options will be shown for MCQ -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', questionHTML);
+            changeQuestionType(questionCount);
+        }
+        
+        function changeQuestionType(questionNum) {
+            const card = document.getElementById(`question-${questionNum}`);
+            const type = card.querySelector('.question-type').value;
+            const optionsContainer = card.querySelector('.question-options-container');
+            
+            if (type === 'mcq') {
+                optionsContainer.innerHTML = `
+                    <div class="mb-3">
+                        <label class="form-label">Opciones (selecciona la correcta)</label>
+                        <div class="option-items">
+                            ${[1,2,3,4].map(i => `
+                                <div class="form-check">
+                                    <input type="radio" class="form-check-input" name="correct-${questionNum}" value="${String.fromCharCode(64 + i)}" ${i === 1 ? 'checked' : ''}>
+                                    <input type="text" class="form-control d-inline-block ms-2" style="width: auto;" placeholder="Opción ${String.fromCharCode(64 + i)}" data-option="${String.fromCharCode(64 + i)}">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'boolean') {
+                optionsContainer.innerHTML = `
+                    <div class="mb-3">
+                        <label class="form-label">Respuesta Correcta</label>
+                        <select class="form-control correct-answer">
+                            <option value="true">Verdadero</option>
+                            <option value="false">Falso</option>
+                        </select>
+                    </div>
+                `;
+            } else if (type === 'number') {
+                optionsContainer.innerHTML = `
+                    <div class="mb-3">
+                        <label class="form-label">Respuesta Correcta (número)</label>
+                        <input type="number" class="form-control correct-answer" step="any" placeholder="0">
+                    </div>
+                `;
+            } else {
+                optionsContainer.innerHTML = '';
+            }
+        }
+        
+        function removeQuestion(questionNum) {
+            const card = document.getElementById(`question-${questionNum}`);
+            if (card) {
+                card.remove();
+            }
+        }
+        
+        document.getElementById('create-exam-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const questions = [];
+            document.querySelectorAll('.question-card').forEach(card => {
+                const type = card.querySelector('.question-type').value;
+                const content = card.querySelector('.question-content').value;
+                const maxScore = parseFloat(card.querySelector('.question-score').value);
+                const tags = card.querySelector('.question-tags').value;
+                
+                let correctAnswer = null;
+                let options = null;
+                
+                if (type === 'mcq') {
+                    const selectedOption = card.querySelector('input[name^="correct-"]:checked').value;
+                    const optionInputs = card.querySelectorAll('input[type="text"][data-option]');
+                    options = {};
+                    optionInputs.forEach(input => {
+                        options[input.dataset.option] = input.value;
+                    });
+                    correctAnswer = selectedOption;
+                } else if (type === 'boolean') {
+                    correctAnswer = card.querySelector('.correct-answer').value;
+                } else if (type === 'number') {
+                    correctAnswer = card.querySelector('.correct-answer').value;
+                }
+                
+                questions.push({ type, content, max_score: maxScore, tags, correct_answer: correctAnswer, options });
+            });
+            
+            if (questions.length === 0) {
+                showAlert('Agrega al menos una pregunta', 'warning');
+                return;
+            }
+            
+            const examData = {
+                title: document.getElementById('exam-title').value,
+                description: document.getElementById('exam-description').value,
+                start_time: document.getElementById('exam-start-time').value || null,
+                duration_minutes: parseInt(document.getElementById('exam-duration').value),
+                questions: questions
+            };
+            
+            try {
+                const response = await fetch(`/api/courses/${course.id}/exams`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(examData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('create-exam-modal')).hide();
+                    await loadExams(course.id);
+                    showAlert('Examen creado exitosamente', 'success');
+                    
+                    // Reset form
+                    document.getElementById('create-exam-form').reset();
+                    document.getElementById('questions-container').innerHTML = '';
+                    questionCount = 0;
+                } else {
+                    showAlert(data.error || 'Error al crear examen', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'danger');
+            }
+        });
+        
+        function showEnrollStudentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('enroll-modal'));
+            modal.show();
+        }
+        
+        document.getElementById('enroll-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const studentEmail = document.getElementById('student-email').value;
+            
+            try {
+                const response = await fetch(`/api/courses/${course.id}/enroll`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentEmail })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('enroll-modal')).hide();
+                    showAlert('Estudiante inscrito exitosamente', 'success');
+                    document.getElementById('enroll-form').reset();
+                } else {
+                    showAlert(data.error || 'Error al inscribir estudiante', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'danger');
+            }
+        });
+        
+        function viewStudents() {
+            showAlert('Función Coming Soon', 'info');
+        }
+        
+        function viewStats() {
+            window.location.href = `/stats/course/${course.id}`;
+        }
+        
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+        
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+        
+        init();
+    </script>
+</body>
+</html>

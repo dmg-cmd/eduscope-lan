@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Progreso - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0f4c81 0%, #1a5a8a 100%);
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: 100%;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f4c81;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .strength-card {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .weakness-card {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: none;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .score-badge {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        
+        .score-excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .score-good {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .score-average {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .score-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .progress-bar-excellent {
+            background: linear-gradient(90deg, #28a745, #34ce57);
+        }
+        
+        .progress-bar-good {
+            background: linear-gradient(90deg, #17a2b8, #20c997);
+        }
+        
+        .progress-bar-average {
+            background: linear-gradient(90deg, #ffc107, #ffcd39);
+        }
+        
+        .progress-bar-poor {
+            background: linear-gradient(90deg, #dc3545, #e4606d);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Cargando tu progreso...</p>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <a href="/dashboard" class="text-decoration-none">
+                <h4 class="fw-bold text-white mb-0">
+                    <span>🏫</span> EduScope LAN
+                </h4>
+            </a>
+        </div>
+        <div class="sidebar-nav p-3">
+            <a href="/dashboard" class="nav-link text-white">
+                <i class="bi bi-house-door"></i> Dashboard
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <h5 class="mb-0 fw-bold">Mi Progreso Académico</h5>
+                <small class="text-muted" id="user-name">Cargando...</small>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <!-- Overview Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="stat-label mb-1">Exámenes Realizados</p>
+                                <div class="stat-value" id="total-exams">--</div>
+                            </div>
+                            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-check-square"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="stat-label mb-1">Promedio General</p>
+                                <div class="stat-value" id="overall-average">--%</div>
+                            </div>
+                            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="stat-label mb-1">Cursos Inscritos</p>
+                                <div class="stat-value" id="total-courses">--</div>
+                            </div>
+                            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-book"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="stat-label mb-1">Mejor Tema</p>
+                                <div class="stat-value" style="font-size: 1.5rem;" id="best-topic">--</div>
+                            </div>
+                            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-trophy"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="chart-card">
+                        <h6 class="fw-bold mb-4">Tendencia de Progreso</h6>
+                        <div class="chart-container">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-card">
+                        <h6 class="fw-bold mb-4">Rendimiento por Tema</h6>
+                        <div class="chart-container">
+                            <canvas id="topicsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Topics Analysis -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h6 class="fw-bold mb-4">💪 Fortalezas</h6>
+                        <div id="strengths-container">
+                            <div class="text-center py-4 text-muted">
+                                Cargando...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h6 class="fw-bold mb-4">📚 Áreas de Mejora</h6>
+                        <div id="weaknesses-container">
+                            <div class="text-center py-4 text-muted">
+                                Cargando...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History -->
+            <div class="chart-card">
+                <h6 class="fw-bold mb-4">Historial de Entregas</h6>
+                <div id="history-container">
+                    <div class="text-center py-4 text-muted">
+                        Cargando...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let stats = null;
+        let progressChart = null;
+        let topicsChart = null;
+        
+        async function init() {
+            const path = window.location.pathname;
+            const studentId = path.split('/stats/student/')[1];
+            
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (!data.user) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = data.user;
+                document.getElementById('user-name').textContent = currentUser.name;
+                
+                // Load stats
+                await loadStats(studentId);
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        async function loadStats(studentId) {
+            try {
+                const response = await fetch(`/api/stats/student/${studentId}`);
+                stats = await response.json();
+                
+                renderStats();
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        function renderStats() {
+            // Overview stats
+            const overall = stats.overall || {};
+            document.getElementById('total-exams').textContent = overall.completed_exams || 0;
+            document.getElementById('overall-average').textContent = (overall.average_score || 0).toFixed(1) + '%';
+            document.getElementById('total-courses').textContent = (stats.courses || []).length;
+            
+            // Find best topic
+            if (stats.topics && stats.topics.length > 0) {
+                const bestTopic = stats.topics[0];
+                document.getElementById('best-topic').textContent = (bestTopic.topic || 'General').substring(0, 15);
+            }
+            
+            // Render charts
+            renderProgressChart();
+            renderTopicsChart();
+            renderStrengths();
+            renderWeaknesses();
+            renderHistory();
+        }
+        
+        function renderProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            if (progressChart) progressChart.destroy();
+            
+            const trend = stats.trend || [];
+            const labels = trend.map(t => new Date(t.submitted_at).toLocaleDateString());
+            const data = trend.map(t => t.percentage);
+            
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Porcentaje',
+                        data: data,
+                        borderColor: '#0f4c81',
+                        backgroundColor: 'rgba(15, 76, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0f4c81',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Porcentaje (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Fecha de entrega'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTopicsChart() {
+            const ctx = document.getElementById('topicsChart').getContext('2d');
+            
+            if (topicsChart) topicsChart.destroy();
+            
+            const topics = (stats.topics || []).slice(0, 6);
+            const labels = topics.map(t => (t.topic || 'General').substring(0, 12));
+            const data = topics.map(t => t.avg_score);
+            
+            const colors = data.map(score => {
+                if (score >= 80) return 'rgba(40, 167, 69, 0.8)';
+                if (score >= 60) return 'rgba(255, 193, 7, 0.8)';
+                return 'rgba(220, 53, 69, 0.8)';
+            });
+            
+            topicsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Promedio (%)',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderStrengths() {
+            const container = document.getElementById('strengths-container');
+            const topics = (stats.topics || []).filter(t => t.avg_score >= 70).slice(0, 3);
+            
+            if (topics.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-emoji-frown" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Aún no hay suficientes datos para identificar fortalezas</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = topics.map(topic => `
+                <div class="strength-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-1">${topic.topic || 'General'}</h6>
+                            <small>${topic.attempts || 0} intentos</small>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size: 1.8rem; font-weight: 700;">${topic.avg_score.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderWeaknesses() {
+            const container = document.getElementById('weaknesses-container');
+            const topics = (stats.topics || []).filter(t => t.avg_score < 70).sort((a, b) => a.avg_score - b.avg_score).slice(0, 3);
+            
+            if (topics.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-emoji-smile" style="font-size: 2rem;"></i>
+                        <p class="mt-2">¡Excelente! No tienes áreas de mejora significativas</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = topics.map(topic => `
+                <div class="weakness-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-1">${topic.topic || 'General'}</h6>
+                            <small>${topic.attempts || 0} intentos</small>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size: 1.8rem; font-weight: 700;">${topic.avg_score.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress-custom">
+                            <div class="progress-bar-poor" style="width: ${topic.avg_score}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            const history = stats.history || [];
+            
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-clock-history" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Aún no has realizado ningún examen</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Examen</th>
+                                <th>Curso</th>
+                                <th>Fecha</th>
+                                <th>Puntaje</th>
+                                <th>Porcentaje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${history.map(item => {
+                                const percentage = item.percentage || 0;
+                                let scoreClass = 'score-poor';
+                                if (percentage >= 90) scoreClass = 'score-excellent';
+                                else if (percentage >= 80) scoreClass = 'score-good';
+                                else if (percentage >= 70) scoreClass = 'score-average';
+                                
+                                return `
+                                    <tr>
+                                        <td class="fw-medium">${item.exam_title}</td>
+                                        <td>${item.course_name}</td>
+                                        <td>${new Date(item.submitted_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <span class="score-badge ${scoreClass}">
+                                                ${item.total_score} pts
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress-custom" style="width: 80px;">
+                                                    <div class="progress-bar-${percentage >= 70 ? 'excellent' : 'poor'}" style="width: ${percentage}%;"></div>
+                                                </div>
+                                                <span class="fw-medium">${percentage.toFixed(1)}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        init();
+    </script>
+</body>
+</html>

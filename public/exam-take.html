@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realizar Examen - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0f4c81 0%, #1a5a8a 100%);
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .timer-card {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        
+        .timer-card.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+        
+        .timer-card.ended {
+            background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .question-number {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .question-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .question-tags {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .option-item {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option-item:hover {
+            border-color: #0f4c81;
+            background: #e8f4fc;
+        }
+        
+        .option-item.selected {
+            border-color: #0f4c81;
+            background: #e8f4fc;
+        }
+        
+        .option-item input {
+            margin-right: 10px;
+        }
+        
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .answer-input:focus {
+            border-color: #0f4c81;
+            outline: none;
+        }
+        
+        .progress-indicator {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            position: sticky;
+            top: 90px;
+        }
+        
+        .progress-dot {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #6c757d;
+        }
+        
+        .progress-dot:hover {
+            background: #0f4c81;
+            color: white;
+        }
+        
+        .progress-dot.answered {
+            background: #28a745;
+            color: white;
+        }
+        
+        .progress-dot.current {
+            background: #0f4c81;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-success-custom {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .progress-indicator {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                border-radius: 12px 12px 0 0;
+                z-index: 100;
+            }
+            .content-area {
+                padding-bottom: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Cargando examen...</p>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <a href="/dashboard" class="text-decoration-none">
+                <h4 class="fw-bold text-white mb-0">
+                    <span>🏫</span> EduScope LAN
+                </h4>
+            </a>
+        </div>
+        <div class="p-3 text-white-50 small">
+            <i class="bi bi-info-circle me-2"></i>
+            Tus respuestas se guardan automáticamente
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <h5 class="mb-0 fw-bold" id="exam-title">Examen</h5>
+                <small class="text-muted" id="exam-course">Curso</small>
+            </div>
+            <div class="timer-card" id="timer">
+                --:--
+:--
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="row">
+                <div class="col-lg-8">
+                    <form id="exam-form">
+                        <div id="questions-container">
+                            <!-- Questions will be rendered here -->
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" id="prev-btn" onclick="prevQuestion()">
+                                <i class="bi bi-arrow-left me-2"></i>Anterior
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="next-btn" onclick="nextQuestion()">
+                                Siguiente<i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success-custom btn-lg">
+                                <i class="bi bi-send me-2"></i>Entregar Examen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="progress-indicator">
+                        <h6 class="fw-bold mb-3">Progreso</h6>
+                        <p class="text-muted small mb-3">
+                            <span id="answered-count">0</span> de <span id="total-count">0</span> preguntas respondidas
+                        </p>
+                        <div id="progress-dots">
+                            <!-- Progress dots will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirm Submit Modal -->
+    <div class="modal fade" id="submit-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Confirmar Entrega</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que deseas entregar el examen?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No podrás modificar tus respuestas después de entregar.
+                    </div>
+                    <p class="mb-0">Preguntas respondidas: <strong id="submit-count">0</strong> de <strong id="submit-total">0</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Revisar</button>
+                    <button type="button" class="btn btn-success-custom" onclick="submitExam()">
+                        <i class="bi bi-check-circle me-2"></i>Entregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let exam = null;
+        let questions = [];
+        let answers = {};
+        let currentQuestionIndex = 0;
+        let timerInterval = null;
+        let timeRemaining = null;
+        
+        async function init() {
+            const path = window.location.pathname;
+            const examId = path.split('/exam/')[1];
+            
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (!data.user) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = data.user;
+                
+                // Load exam data
+                const examResponse = await fetch(`/api/exams/${examId}`);
+                const examData = await examResponse.json();
+                
+                exam = examData.exam;
+                questions = examData.questions;
+                
+                if (!exam) {
+                    showAlert('Examen no encontrado', 'danger');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return;
+                }
+                
+                document.getElementById('exam-title').textContent = exam.title;
+                document.getElementById('exam-course').textContent = `Examen #${exam.id}`;
+                
+                // Initialize timer
+                initializeTimer();
+                
+                // Render questions
+                renderQuestions();
+                renderProgressDots();
+                
+                // Save answers to localStorage periodically
+                setInterval(saveAnswersToLocalStorage, 30000);
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        function initializeTimer() {
+            const startTime = new Date(exam.start_time || exam.created_at);
+            const duration = (exam.duration_minutes || 60) * 60 * 1000;
+            const endTime = new Date(startTime.getTime() + duration);
+            
+            function updateTimer() {
+                const now = new Date();
+                const diff = endTime - now;
+                
+                if (diff <= 0) {
+                    document.getElementById('timer').textContent = '00:00:00';
+                    document.getElementById('timer').classList.add('ended');
+                    if (timerInterval) clearInterval(timerInterval);
+                    showAlert('El tiempo ha terminado', 'danger');
+                    setTimeout(() => submitExam(true), 2000);
+                    return;
+                }
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('timer').textContent = timeStr;
+                
+                // Add warning class if less than 5 minutes
+                if (diff < 5 * 60 * 1000) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+            }
+            
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            document.getElementById('total-count').textContent = questions.length;
+            
+            container.innerHTML = questions.map((q, index) => `
+                <div class="question-card ${index === currentQuestionIndex ? '' : 'd-none'}" data-question-index="${index}">
+                    <div class="question-number">${index + 1}</div>
+                    <div class="question-content">${q.content}</div>
+                    ${q.tags ? `<div class="question-tags"><i class="bi bi-tag me-1"></i>${q.tags}</div>` : ''}
+                    <div class="mt-4">
+                        ${renderQuestionInput(q, index)}
+                    </div>
+                </div>
+            `).join('');
+            
+            updateNavigationButtons();
+        }
+        
+        function renderQuestionInput(question, index) {
+            const savedAnswer = answers[question.id] || '';
+            
+            if (question.type === 'mcq') {
+                const options = question.options || {};
+                return Object.entries(options).map(([key, value]) => `
+                    <div class="option-item ${savedAnswer === key ? 'selected' : ''}" onclick="selectOption(${index}, '${key}')">
+                        <input type="radio" name="question-${question.id}" value="${key}" ${savedAnswer === key ? 'checked' : ''}>
+                        <span>${key}) ${value}</span>
+                    </div>
+                `).join('');
+            } else if (question.type === 'boolean') {
+                return `
+                    <div class="d-flex gap-3 mt-3">
+                        <div class="option-item ${savedAnswer === 'true' ? 'selected' : ''}" onclick="selectOption(${index}, 'true')" style="flex: 1; text-align: center;">
+                            <input type="radio" name="question-${question.id}" value="true" ${savedAnswer === 'true' ? 'checked' : ''}>
+                            <span class="ms-2">Verdadero</span>
+                        </div>
+                        <div class="option-item ${savedAnswer === 'false' ? 'selected' : ''}" onclick="selectOption(${index}, 'false')" style="flex: 1; text-align: center;">
+                            <input type="radio" name="question-${question.id}" value="false" ${savedAnswer === 'false' ? 'checked' : ''}>
+                            <span class="ms-2">Falso</span>
+                        </div>
+                    </div>
+                `;
+            } else if (question.type === 'number') {
+                return `
+                    <input type="number" class="answer-input" 
+                           value="${savedAnswer}" 
+                           onchange="saveAnswer(${index}, this.value)"
+                           step="any"
+                           placeholder="Ingresa tu respuesta numérica...">
+                `;
+            } else {
+                return `
+                    <textarea class="answer-input" rows="5" 
+                              onchange="saveAnswer(${index}, this.value)"
+                              placeholder="Escribe tu respuesta aquí...">${savedAnswer}</textarea>
+                `;
+            }
+        }
+        
+        function selectOption(questionIndex, value) {
+            const question = questions[questionIndex];
+            answers[question.id] = value;
+            
+            // Update UI
+            const card = document.querySelector(`[data-question-index="${questionIndex}"]`);
+            card.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('input').checked = false;
+            });
+            card.querySelector(`.option-item[onclick*="'${value}'"]`).classList.add('selected');
+            card.querySelector(`.option-item[onclick*="'${value}'"] input`).checked = true;
+            
+            updateProgress();
+        }
+        
+        function saveAnswer(questionIndex, value) {
+            const question = questions[questionIndex];
+            answers[question.id] = value;
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            const answered = Object.keys(answers).filter(key => answers[key] && answers[key].trim()).length;
+            document.getElementById('answered-count').textContent = answered;
+            
+            // Update dots
+            questions.forEach((q, index) => {
+                const dot = document.getElementById(`dot-${index}`);
+                if (answers[q.id] && answers[q.id].trim()) {
+                    dot.classList.add('answered');
+                } else {
+                    dot.classList.remove('answered');
+                }
+            });
+        }
+        
+        function renderProgressDots() {
+            const container = document.getElementById('progress-dots');
+            container.innerHTML = questions.map((q, index) => `
+                <div class="progress-dot ${index === currentQuestionIndex ? 'current' : ''}" 
+                     id="dot-${index}" 
+                     onclick="goToQuestion(${index})">
+                    ${index + 1}
+                </div>
+            `).join('');
+        }
+        
+        function goToQuestion(index) {
+            // Save current answer before moving
+            saveCurrentAnswer();
+            
+            currentQuestionIndex = index;
+            
+            document.querySelectorAll('.question-card').forEach((card, i) => {
+                card.classList.toggle('d-none', i !== index);
+            });
+            
+            document.querySelectorAll('.progress-dot').forEach((dot, i) => {
+                dot.classList.toggle('current', i === index);
+            });
+            
+            updateNavigationButtons();
+        }
+        
+        function saveCurrentAnswer() {
+            // Save any unsaved input
+            const currentCard = document.querySelector(`[data-question-index="${currentQuestionIndex}"]`);
+            const textarea = currentCard.querySelector('textarea');
+            const input = currentCard.querySelector('input[type="number"]');
+            
+            if (textarea) {
+                saveAnswer(currentQuestionIndex, textarea.value);
+            }
+            if (input) {
+                saveAnswer(currentQuestionIndex, input.value);
+            }
+        }
+        
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                goToQuestion(currentQuestionIndex - 1);
+            }
+        }
+        
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                goToQuestion(currentQuestionIndex + 1);
+            }
+        }
+        
+        function updateNavigationButtons() {
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            document.getElementById('next-btn').disabled = currentQuestionIndex === questions.length - 1;
+        }
+        
+        function saveAnswersToLocalStorage() {
+            localStorage.setItem(`exam_${exam.id}_answers`, JSON.stringify(answers));
+        }
+        
+        function loadAnswersFromLocalStorage() {
+            const saved = localStorage.getItem(`exam_${exam.id}_answers`);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    answers = parsed;
+                } catch (e) {
+                    console.error('Error loading saved answers');
+                }
+            }
+        }
+        
+        document.getElementById('exam-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const answered = Object.keys(answers).filter(key => answers[key] && answers[key].trim()).length;
+            document.getElementById('submit-count').textContent = answered;
+            document.getElementById('submit-total').textContent = questions.length;
+            
+            const modal = new bootstrap.Modal(document.getElementById('submit-modal'));
+            modal.show();
+        });
+        
+        async function submitExam(force = false) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const answersArray = Object.entries(answers).map(([questionId, content]) => ({
+                question_id: parseInt(questionId),
+                content: content
+            }));
+            
+            try {
+                const response = await fetch(`/api/exams/${exam.id}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers: answersArray })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.removeItem(`exam_${exam.id}_answers`);
+                    showAlert(`Examen entregado exitosamente. Tu puntuación: ${data.score}`, 'success');
+                    setTimeout(() => {
+                        window.location.href = `/stats/student/${currentUser.id}`;
+                    }, 3000);
+                } else {
+                    showAlert(data.error || 'Error al entregar examen', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+        
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+        
+        // Load saved answers on init
+        loadAnswersFromLocalStorage();
+        
+        init();
+    </script>
+</body>
+</html>

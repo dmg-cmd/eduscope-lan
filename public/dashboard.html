@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0f4c81 0%, #1a5a8a 100%);
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            transition: all 0.3s;
+            border-radius: 0;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f4c81;
+        }
+        
+        .course-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .course-header {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            color: white;
+            padding: 20px;
+        }
+        
+        .course-body {
+            padding: 20px;
+        }
+        
+        .exam-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-primary-custom:hover {
+            color: white;
+        }
+        
+        .btn-outline-custom {
+            border: 2px solid #0f4c81;
+            color: #0f4c81;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-outline-custom:hover {
+            background: #0f4c81;
+            color: white;
+        }
+        
+        .user-dropdown {
+            cursor: pointer;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <h4 class="fw-bold text-white mb-0">
+                <span>🏫</span> EduScope LAN
+            </h4>
+        </div>
+        <div class="sidebar-nav">
+            <ul class="nav flex-column" id="nav-menu">
+                <!-- Menu will be populated by JS -->
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <button class="btn btn-light d-md-none" id="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h5 class="mb-0 fw-bold" id="page-title">Dashboard</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <div class="d-flex align-items-center gap-2 user-dropdown" data-bs-toggle="dropdown">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="d-none d-md-inline fw-medium" id="user-name">Usuario</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="showProfile()"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <!-- Dashboard Content -->
+            <div id="dashboard-content">
+                <!-- Stats Row -->
+                <div class="row g-4 mb-4" id="stats-row">
+                    <!-- Stats will be populated by JS -->
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="row mb-4" id="quick-actions">
+                    <!-- Quick actions for teachers -->
+                </div>
+                
+                <!-- Courses Section -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Mis Cursos</h5>
+                        <button class="btn btn-primary-custom" id="create-course-btn" onclick="showCreateCourseModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Nuevo Curso
+                        </button>
+                    </div>
+                    <div class="row g-4" id="courses-grid">
+                        <!-- Courses will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Course Modal -->
+    <div class="modal fade" id="create-course-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Crear Nuevo Curso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="create-course-form">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Código del Curso</label>
+                            <input type="text" class="form-control" id="course-code" placeholder="MAT101" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Nombre del Curso</label>
+                            <input type="text" class="form-control" id="course-name" placeholder="Matemáticas Básicas" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Descripción</label>
+                            <textarea class="form-control" id="course-description" rows="3" placeholder="Descripción opcional..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary-custom">Crear Curso</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let courses = [];
+        
+        async function init() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (!data.user) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = data.user;
+                document.getElementById('user-name').textContent = currentUser.name;
+                
+                setupMenu();
+                await loadCourses();
+                await loadStats();
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        function setupMenu() {
+            const navMenu = document.getElementById('nav-menu');
+            
+            let menuHTML = `
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="showDashboard()">
+                        <i class="bi bi-house-door"></i> Dashboard
+                    </a>
+                </li>
+            `;
+            
+            if (currentUser.role === 'teacher') {
+                menuHTML += `
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showAllStats()">
+                            <i class="bi bi-bar-chart"></i> Estadísticas
+                        </a>
+                    </li>
+                `;
+            } else {
+                menuHTML += `
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showMyStats()">
+                            <i class="bi bi-graph-up"></i> Mi Progreso
+                        </a>
+                    </li>
+                `;
+            }
+            
+            navMenu.innerHTML = menuHTML;
+            
+            // Show/hide create course button based on role
+            const createBtn = document.getElementById('create-course-btn');
+            if (currentUser.role !== 'teacher') {
+                createBtn.style.display = 'none';
+            }
+        }
+        
+        async function loadCourses() {
+            try {
+                const response = await fetch('/api/courses');
+                const data = await response.json();
+                courses = data.courses;
+                
+                renderCourses();
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+        
+        function renderCourses() {
+            const grid = document.getElementById('courses-grid');
+            
+            if (courses.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <div class="text-muted mb-3" style="font-size: 3rem;">📚</div>
+                            <h5 class="text-muted">No hay cursos disponibles</h5>
+                            <p class="text-muted small">
+                                ${currentUser.role === 'teacher' 
+                                    ? 'Crea tu primer curso para comenzar' 
+                                    : 'Aún no estás inscrito en ningún curso'}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = courses.map(course => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="course-card" onclick="window.location.href='/course/${course.id}'">
+                        <div class="course-header">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1 opacity-75">${course.code}</h6>
+                                    <h5 class="fw-bold mb-0">${course.name}</h5>
+                                </div>
+                                <span class="badge bg-light text-dark">${course.teacher_name || ''}</span>
+                            </div>
+                        </div>
+                        <div class="course-body">
+                            <p class="text-muted small mb-3">${course.description || 'Sin descripción'}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    ${new Date(course.created_at).toLocaleDateString()}
+                                </span>
+                                <span class="btn btn-sm btn-outline-primary">Ver Curso</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadStats() {
+            const statsRow = document.getElementById('stats-row');
+            const quickActions = document.getElementById('quick-actions');
+            
+            if (currentUser.role === 'teacher') {
+                statsRow.innerHTML = `
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Total de Cursos</p>
+                                    <div class="stat-value">${courses.length}</div>
+                                </div>
+                                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Estudiantes Activos</p>
+                                    <div class="stat-value">--</div>
+                                </div>
+                                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Exámenes Totales</p>
+                                    <div class="stat-value">--</div>
+                                </div>
+                                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-file-text"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                quickActions.innerHTML = `
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Acciones Rápidas</h6>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <button class="btn btn-primary-custom" onclick="showCreateCourseModal()">
+                                        <i class="bi bi-plus-circle me-2"></i>Crear Curso
+                                    </button>
+                                    <button class="btn btn-outline-custom" onclick="showAllStats()">
+                                        <i class="bi bi-bar-chart me-2"></i>Ver Estadísticas
+                                    </button>
+                                    <a href="/qrcode" target="_blank" class="btn btn-success" style="background: linear-gradient(135deg, #28a745 0%, #34ce57 100%); border: none;">
+                                        <i class="bi bi-qr-code me-2"></i>Ver Codigo QR
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statsRow.innerHTML = `
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Cursos Inscritos</p>
+                                    <div class="stat-value">${courses.length}</div>
+                                </div>
+                                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Exámenes Realizados</p>
+                                    <div class="stat-value">--</div>
+                                </div>
+                                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="text-muted mb-1">Promedio General</p>
+                                    <div class="stat-value">--</div>
+                                </div>
+                                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                quickActions.innerHTML = `
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Acciones Rápidas</h6>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <button class="btn btn-primary-custom" onclick="showMyStats()">
+                                        <i class="bi bi-graph-up me-2"></i>Ver Mi Progreso
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function showCreateCourseModal() {
+            const modal = new bootstrap.Modal(document.getElementById('create-course-modal'));
+            modal.show();
+        }
+        
+        document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const code = document.getElementById('course-code').value;
+            const name = document.getElementById('course-name').value;
+            const description = document.getElementById('course-description').value;
+            
+            try {
+                const response = await fetch('/api/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, name, description })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('create-course-modal')).hide();
+                    await loadCourses();
+                    showAlert('Curso creado exitosamente', 'success');
+                } else {
+                    showAlert(data.error || 'Error al crear curso', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'danger');
+            }
+        });
+        
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+        
+        function showDashboard() {
+            document.getElementById('page-title').textContent = 'Dashboard';
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector('.nav-link[onclick="showDashboard()"]').classList.add('active');
+        }
+        
+        function showAllStats() {
+            if (courses.length > 0) {
+                window.location.href = `/stats/course/${courses[0].id}`;
+            } else {
+                showAlert('Primero crea un curso para ver estadísticas', 'warning');
+            }
+        }
+        
+        function showMyStats() {
+            window.location.href = `/stats/student/${currentUser.id}`;
+        }
+        
+        function showProfile() {
+            showAlert('Perfil: ' + currentUser.name, 'info');
+        }
+        
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+        
+        // Toggle sidebar on mobile
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('d-none');
+        });
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

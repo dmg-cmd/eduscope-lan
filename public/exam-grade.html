@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calificar Examen - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0f4c81 0%, #1a5a8a 100%);
+            width: 260px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .grading-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 180px);
+        }
+        
+        .student-panel {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .student-header {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            color: white;
+            padding: 20px;
+        }
+        
+        .student-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px;
+        }
+        
+        .student-item {
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 5px;
+        }
+        
+        .student-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .student-item.active {
+            background: #e8f4fc;
+            border-left: 3px solid #0f4c81;
+        }
+        
+        .student-item.graded {
+            border-left: 3px solid #28a745;
+        }
+        
+        .student-item.pending {
+            border-left: 3px solid #ffc107;
+        }
+        
+        .question-panel {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .question-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .question-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .answer-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .answer-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .answer-text {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .grading-form {
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+        
+        .score-input {
+            width: 100px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-success-custom {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .auto-graded {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+        
+        .tag-badge {
+            background: #e8f4fc;
+            color: #0f4c81;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 992px) {
+            .grading-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <a href="/dashboard" class="text-decoration-none">
+                <h4 class="fw-bold text-white mb-0">
+                    <span>🏫</span> EduScope LAN
+                </h4>
+            </a>
+        </div>
+        <div class="sidebar-nav p-3">
+            <a href="/dashboard" class="nav-link text-white">
+                <i class="bi bi-house-door"></i> Dashboard
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div>
+                <h5 class="mb-0 fw-bold" id="exam-title">Calificando Examen</h5>
+                <small class="text-muted" id="exam-subtitle">Selecciona un estudiante</small>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="grading-container">
+                <!-- Student List Panel -->
+                <div class="student-panel">
+                    <div class="student-header">
+                        <h6 class="fw-bold mb-0">Estudiantes</h6>
+                        <small class="opacity-75">Selecciona para calificar</small>
+                    </div>
+                    <div class="student-list" id="student-list">
+                        <div class="text-center py-4 text-muted">
+                            Cargando estudiantes...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Question Grading Panel -->
+                <div class="question-panel">
+                    <div class="question-header">
+                        <h6 class="fw-bold mb-0" id="question-title">Respuestas del Estudiante</h6>
+                        <small class="text-muted" id="question-info">Selecciona un estudiante</small>
+                    </div>
+                    <div class="question-content" id="question-content">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-person-vcard" style="font-size: 3rem;"></i>
+                            <p class="mt-3">Selecciona un estudiante de la lista para ver sus respuestas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let exam = null;
+        let submissions = [];
+        let currentSubmission = null;
+        let currentQuestionIndex = 0;
+        
+        async function init() {
+            const path = window.location.pathname;
+            const examId = path.split('/exam/')[1].split('/grading')[0];
+            
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (!data.user || data.user.role !== 'teacher') {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = data.user;
+                
+                // Load exam data
+                const examResponse = await fetch(`/api/exams/${examId}`);
+                const examData = await examResponse.json();
+                exam = examData.exam;
+                questions = examData.questions;
+                
+                document.getElementById('exam-title').textContent = exam.title;
+                
+                // Load submissions
+                await loadSubmissions(examId);
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        async function loadSubmissions(examId) {
+            try {
+                const response = await fetch(`/api/exams/${examId}/submissions`);
+                const data = await response.json();
+                submissions = data.submissions;
+                
+                renderStudentList();
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+            }
+        }
+        
+        function renderStudentList() {
+            const container = document.getElementById('student-list');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-people" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No hay entregas aún</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = submissions.map((sub, index) => {
+                const pendingCount = sub.answers.filter(a => a.type !== 'mcq' && a.type !== 'boolean' && a.type !== 'number' && a.score === 0).length;
+                const isPending = pendingCount > 0 || sub.answers.some(a => a.score === 0);
+                
+                return `
+                    <div class="student-item ${isPending ? 'pending' : 'graded'} ${index === 0 ? 'active' : ''}" 
+                         onclick="selectSubmission(${index})">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-medium">${sub.student_name}</div>
+                                <small class="text-muted">${sub.student_email}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${calculateScore(sub)}%</div>
+                                <small class="${isPending ? 'text-warning' : 'text-success'}">
+                                    ${isPending ? `${pendingCount} pendiente(s)` : 'Completado'}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Select first submission by default
+            if (submissions.length > 0) {
+                selectSubmission(0);
+            }
+        }
+        
+        function calculateScore(submission) {
+            const totalMax = submission.answers.reduce((sum, a) => sum + a.max_score, 0);
+            const scored = submission.answers.reduce((sum, a) => sum + a.score, 0);
+            return totalMax > 0 ? Math.round((scored / totalMax) * 100) : 0;
+        }
+        
+        function selectSubmission(index) {
+            currentSubmission = submissions[index];
+            currentQuestionIndex = 0;
+            
+            // Update active state in list
+            document.querySelectorAll('.student-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            renderQuestionPanel();
+        }
+        
+        function renderQuestionPanel() {
+            if (!currentSubmission) return;
+            
+            const currentAnswer = currentSubmission.answers[currentQuestionIndex];
+            const question = questions[currentQuestionIndex];
+            
+            document.getElementById('question-title').textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            document.getElementById('question-info').innerHTML = `
+                <span class="tag-badge">${question.tags || 'Sin tema'}</span>
+                <span class="ms-2">Puntaje máximo: ${question.max_score}</span>
+            `;
+            
+            const isAutoGraded = ['mcq', 'boolean', 'number'].includes(question.type);
+            
+            let gradingHTML = '';
+            
+            if (isAutoGraded) {
+                gradingHTML = `
+                    <div class="auto-graded">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Calificación automática</strong>
+                        <p class="mb-0 mt-1 small">Esta pregunta se califica automáticamente según la respuesta correcta.</p>
+                    </div>
+                `;
+            }
+            
+            gradingHTML += `
+                <div class="answer-card">
+                    <div class="answer-label">Pregunta:</div>
+                    <div class="answer-text">${question.content}</div>
+                </div>
+                
+                <div class="answer-card" style="background: #e8f4fc;">
+                    <div class="answer-label">Respuesta del estudiante:</div>
+                    <div class="answer-text">${currentAnswer.content || '<em class="text-muted">Sin respuesta</em>'}</div>
+                </div>
+                
+                ${['mcq', 'boolean', 'number'].includes(question.type) ? `
+                    <div class="answer-card">
+                        <div class="answer-label">Respuesta correcta:</div>
+                        <div class="answer-text">${question.correct_answer || 'N/A'}</div>
+                    </div>
+                ` : ''}
+                
+                <div class="grading-form">
+                    <div class="row align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Puntaje (máx: ${question.max_score})</label>
+                            <input type="number" class="form-control score-input" 
+                                   id="grade-score" 
+                                   value="${currentAnswer.score}" 
+                                   min="0" 
+                                   max="${question.max_score}" 
+                                   step="0.5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Retroalimentación</label>
+                            <input type="text" class="form-control" 
+                                   id="grade-feedback" 
+                                   value="${currentAnswer.feedback || ''}"
+                                   placeholder="Comentarios opcionales...">
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between">
+                        <div>
+                            ${currentQuestionIndex > 0 ? `
+                                <button class="btn btn-outline-secondary" onclick="prevQuestion()">
+                                    <i class="bi bi-arrow-left me-1"></i>Anterior
+                                </button>
+                            ` : ''}
+                        </div>
+                        <button class="btn btn-success-custom" onclick="saveGrade()">
+                            <i class="bi bi-check-lg me-1"></i>Guardar Calificación
+                        </button>
+                        <div>
+                            ${currentQuestionIndex < questions.length - 1 ? `
+                                <button class="btn btn-outline-primary" onclick="nextQuestion()">
+                                    Siguiente<i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('question-content').innerHTML = gradingHTML;
+        }
+        
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestionPanel();
+            }
+        }
+        
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestionPanel();
+            }
+        }
+        
+        async function saveGrade() {
+            const score = parseFloat(document.getElementById('grade-score').value);
+            const feedback = document.getElementById('grade-feedback').value;
+            const currentAnswer = currentSubmission.answers[currentQuestionIndex];
+            
+            try {
+                const response = await fetch(`/api/answers/${currentAnswer.id}/grade`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ score, feedback })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Calificación guardada', 'success');
+                    
+                    // Update local data
+                    currentAnswer.score = score;
+                    currentAnswer.feedback = feedback;
+                    
+                    // Update student list
+                    const examId = exam.id;
+                    await loadSubmissions(examId);
+                } else {
+                    showAlert(data.error || 'Error al guardar', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+        
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

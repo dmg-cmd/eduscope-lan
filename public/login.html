@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - EduScope LAN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo span {
+            font-size: 3rem;
+        }
+        
+        .form-control {
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #0f4c81;
+            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.1);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a6fb5 100%);
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(15, 76, 129, 0.3);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        
+        .divider span {
+            padding: 0 15px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab-btn.active {
+            color: #0f4c81;
+            border-bottom-color: #0f4c81;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .alert {
+            border-radius: 10px;
+        }
+        
+        .form-select {
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-logo">
+            <span>🏫</span>
+            <h4 class="fw-bold mt-2">EduScope LAN</h4>
+        </div>
+        
+        <div class="d-flex justify-content-center mb-4">
+            <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+            <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+        </div>
+        
+        <div id="alert-container"></div>
+        
+        <!-- Login Form -->
+        <div id="login-tab" class="tab-content active">
+            <form id="login-form">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="login-email" placeholder="correo@ejemplo.com" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Contraseña</label>
+                    <input type="password" class="form-control" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary-custom text-white w-100">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="register-tab" class="tab-content">
+            <form id="register-form">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Nombre Completo</label>
+                    <input type="text" class="form-control" id="register-name" placeholder="Juan Pérez" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="register-email" placeholder="correo@ejemplo.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Rol</label>
+                    <select class="form-select" id="register-role" required>
+                        <option value="student">Estudiante</option>
+                        <option value="teacher">Profesor</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Contraseña</label>
+                    <input type="password" class="form-control" id="register-password" placeholder="••••••••" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary-custom text-white w-100">
+                    Crear Cuenta
+                </button>
+            </form>
+        </div>
+        
+        <div class="divider">
+            <span>Demo</span>
+        </div>
+        
+        <div class="text-center">
+            <p class="text-muted small mb-2">Credenciales de demostración:</p>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <span class="badge bg-light text-dark">Profesor: profesor@demo.com</span>
+                <span class="badge bg-light text-dark">Estudiante: estudiante@demo.com</span>
+            </div>
+            <p class="text-muted small mt-2 mb-0">Contraseña: password123</p>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('login-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('register-tab').classList.add('active');
+            }
+            
+            document.getElementById('alert-container').innerHTML = '';
+        }
+        
+        function showAlert(message, type = 'danger') {
+            document.getElementById('alert-container').innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+        
+        // Login Form
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    showAlert(data.error || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                showAlert('Error de conexión');
+            }
+        });
+        
+        // Register Form
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const role = document.getElementById('register-role').value;
+            const password = document.getElementById('register-password').value;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, role, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    showAlert(data.error || 'Error al registrar');
+                }
+            } catch (error) {
+                showAlert('Error de conexión');
+            }
+        });
+        
+        // Verificar si ya está logueado
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.user) {
+                    window.location.href = '/dashboard';
+                }
+            });
+    </script>
+</body>
+</html>
