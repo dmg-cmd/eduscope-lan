@@ -15,8 +15,10 @@ set "ip_count=0"
 echo Detectando direcciones IP disponibles...
 echo.
 
-for /f "tokens=14" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+REM Buscar IPs en espanol e ingles
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
     set "ip=%%a"
+    set "ip=!ip: =!"
     if not "!ip!"=="" (
         set /a "ip_count+=1"
         set "ips[!ip_count!]=!ip!"
@@ -31,15 +33,20 @@ set "port=3000"
 if %ip_count% equ 0 (
     echo No se detectaron IPs. Usando 0.0.0.0
     set "selected_ip=0.0.0.0"
-) else if %ip_count% equ 1 (
-    set "selected_ip=!ips[1]!"
-    echo Usando IP: !selected_ip!
-) else (
-    set /p "choice=Ingresa el numero de IP a usar (1-%ip_count%): "
-    set "selected_ip=!ips[%choice%]!"
-    if "!selected_ip!"=="" set "selected_ip=!ips[1]!"
+    goto :continue
 )
 
+if %ip_count% equ 1 (
+    set "selected_ip=!ips[1]!"
+    echo Usando IP: !selected_ip!
+    goto :continue
+)
+
+set /p "choice=Ingresa el numero de IP a usar (1-%ip_count%): "
+set "selected_ip=!ips[%choice%]!"
+if "!selected_ip!"=="" set "selected_ip=!ips[1]!"
+
+:continue
 echo.
 echo ----------------------------------------------------------------
 
