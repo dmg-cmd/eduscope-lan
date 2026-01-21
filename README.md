@@ -45,6 +45,32 @@ EduScope LAN es una plataforma de gestión académica similar a Gradescope, dise
    - Desde el servidor: `http://localhost:3000`
    - Desde otros dispositivos: `http://IP-DEL-SERVIDOR:3000`
 
+### Configuración de IP (Opcional)
+
+Por defecto, el sistema detecta automáticamente la IP de tu red local. Si necesitas especificar una IP diferente (por ejemplo, cuando tienes múltiples interfaces de red), puedes usar una variable de entorno:
+
+**Linux/Mac:**
+```bash
+EDUSCOPE_IP=192.168.1.100 npm start
+```
+
+**Windows (CMD):**
+```cmd
+set EDUSCOPE_IP=192.168.1.100 && npm start
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:EDUSCOPE_IP="192.168.1.100"; npm start
+```
+
+También puedes usar la variable `HOST_IP` como alternativa:
+```bash
+HOST_IP=192.168.1.100 npm start
+```
+
+El servidor mostrará en la consola qué IP está utilizando y si fue especificada manualmente o detectada automáticamente.
+
 ## Credenciales de Demostración
 
 | Rol | Correo | Contraseña |

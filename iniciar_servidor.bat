@@ -38,13 +38,23 @@ if %ip_count% equ 0 (
 
 if %ip_count% equ 1 (
     set "selected_ip=!ips[1]!"
-    echo Usando IP: !selected_ip!
+    echo Usando unica IP detectada: !selected_ip!
     goto :continue
 )
 
-set /p "choice=Ingresa el numero de IP a usar (1-%ip_count%): "
+echo.
+echo multiple IPs detected, please select one:
+echo.
+
+set /p "choice=Enter the IP number to use (1-%ip_count%): "
+
+REM Validate input
+if "!choice!"=="" set "choice=1"
+if %choice% gtr %ip_count% set "choice=1"
+if %choice% lss 1 set "choice=1"
+
 set "selected_ip=!ips[%choice%]!"
-if "!selected_ip!"=="" set "selected_ip=!ips[1]!"
+echo Selected IP: !selected_ip!
 
 :continue
 echo.
@@ -52,58 +62,59 @@ echo ----------------------------------------------------------------
 
 cd /d "%~dp0"
 
-echo Verificando Node.js...
+echo Verifying Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
     color 0C
     echo.
-    echo ERROR: Node.js no esta instalado
+    echo ERROR: Node.js is not installed
     echo.
-    echo Descarga Node.js desde: https://nodejs.org
-    echo Instala la version LTS y reinicia esta terminal
+    echo Download Node.js from: https://nodejs.org
+    echo Install the LTS version and restart this terminal
     echo.
     pause
     exit /b 1
 )
-echo Node.js encontrado
+echo Node.js found
 
-echo Verificando dependencias...
+echo Verifying dependencies...
 if not exist "node_modules" (
-    echo Instalando dependencias...
+    echo Installing dependencies...
     npm install
     if errorlevel 1 (
-        echo ERROR al instalar dependencias
+        echo ERROR installing dependencies
         pause
         exit /b 1
     )
 )
-echo Dependencias listas
+echo Dependencies ready
 
 echo.
 echo ================================================================
-echo    Iniciando EduScope LAN...
+echo    Starting EduScope LAN...
 echo ================================================================
 echo.
-echo Puerto: %port%
+echo Port: %port%
 echo IP: !selected_ip!
 echo.
-echo Acceso local: http://localhost:%port%
-echo Acceso LAN:   http://!selected_ip!:%port%
+echo Local access: http://localhost:%port%
+echo LAN access:   http://!selected_ip!:%port%
 echo.
 echo ----------------------------------------------------------------
 echo.
-echo CREDENCIALES DE PRUEBA:
-echo    Profesor:   profesor@demo.com / password123
-echo    Estudiante: estudiante@demo.com / password123
+echo Test credentials:
+echo    Professor:   profesor@demo.com / password123
+echo    Student:     estudiante@demo.com / password123
 echo.
-echo Para ver el codigo QR: http://localhost:%port%/qrcode
+echo To view QR code: http://localhost:%port%/qrcode
 echo.
-echo Presiona Ctrl+C para detener el servidor
+echo Press Ctrl+C to stop the server
 echo ----------------------------------------------------------------
 echo.
 
-node app.js
+REM Launch Node.js with the selected IP as a command-line argument
+node app.js --ip=!selected_ip!
 
 echo.
-echo Servidor detenido.
+echo Server stopped.
 pause

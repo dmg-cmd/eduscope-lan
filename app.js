@@ -9,6 +9,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 
+// Obtener IP del primer argumento o variable de entorno
+const args = process.argv.slice(2);
+const customIPArg = args.find(arg => arg.startsWith('--ip='));
+const IP_FROM_ARGS = customIPArg ? customIPArg.split('=')[1] : null;
+
 const app = express();
 const PORT = 3000;
 const SECRET_KEY = 'eduscope-lan-secret-key-2024';
@@ -625,9 +630,57 @@ app.get('/stats/student/:id', (req, res) => {
 // INICIALIZACIÓN DEL SERVIDOR
 // ============================================
 function getLocalIP() {
+    // Prioridad 1: Variable de entorno explícita (permite al usuario elegir la IP)
+    const envIP = process.env.EDUSCOPE_IP || process.env.HOST_IP;
+    if (envIP && envIP.trim() !== '') {
+        console.log(`[IP Config] Usando IP especificada por变量 de entorno: ${envIP}`);
+        return envIP.trim();
+    }
+    
+    // Prioridad 2: Detección automática
     try {
-        return ip.address();
+        // Intentar detectar la IP de red local (no localhost)
+        const interfaces = require('os').networkInterfaces();
+        let detectedIP = null;
+        
+        for (const name of Object.keys(interfaces)) {
+            for (const iface of interfaces[name]) {
+                // Buscar IPv4 que no sea interna (127.0.0.1)
+                if (iface.family === 'IPv4' && !iface.internal) {
+                    // Preferir IPs que empiecen con 192.168, 10. o 172. (redes locales típicas)
+                    if (iface.address.startsWith('192.168.') || 
+                        iface.address.startsWith('10.') || 
+                        iface.address.startsWith('172.')) {
+                        detectedIP = iface.address;
+                        break;
+                    }
+                }
+            }
+            if (detectedIP) break;
+        }
+        
+        // Si no encontró IP de red local, usar cualquier IPv4 no interna
+        if (!detectedIP) {
+            for (const name of Object.keys(interfaces)) {
+                for (const iface of interfaces[name]) {
+                    if (iface.family === 'IPv4' && !iface.internal) {
+                        detectedIP = iface.address;
+                        break;
+                    }
+                }
+                if (detectedIP) break;
+            }
+        }
+        
+        // Último recurso: usar el paquete ip
+        if (!detectedIP) {
+            detectedIP = ip.address();
+        }
+        
+        console.log(`[IP Config] IP detectada automáticamente: ${detectedIP}`);
+        return detectedIP;
     } catch (e) {
+        console.warn('[IP Config] Error detectando IP, usando localhost');
         return 'localhost';
     }
 }
@@ -742,11 +795,20 @@ function initDatabase() {
 initDatabase();
 
 app.listen(PORT, '0.0.0.0', async () => {
-    const localIP = getLocalIP();
+    const localIP = IP_FROM_ARGS || process.env.EDUSCOPE_IP || process.env.HOST_IP || getLocalIP();
     const qrUrl = `http://${localIP}:${PORT}`;
+    const customIP = IP_FROM_ARGS || process.env.EDUSCOPE_IP || process.env.HOST_IP;
     
     // Generar y guardar código QR
     let qrInfo = '';
+    let ipSource = '';
+    
+    if (customIP) {
+        ipSource = `   IP personalizada configurada: ${customIP}`;
+    } else {
+        ipSource = `   IP detectada automaticamente`;
+    }
+    
     try {
         const qrPath = path.join(__dirname, 'public', 'qrcode.png');
         await QRCode.toFile(qrPath, qrUrl, {
@@ -772,12 +834,18 @@ app.listen(PORT, '0.0.0.0', async () => {
 ║                                                            ║
 ${qrInfo}
 ║                                                            ║
+${ipSource}
+║                                                            ║
 ║   👤 Credenciales de demostración:                         ║
 ║      Profesor:  profesor@demo.com / password123            ║
 ║      Estudiante: estudiante@demo.com / password123         ║
 ║                                                            ║
 ║   📄 Para ver el código QR en navegador:                   ║
 ║      http://localhost:${PORT}/qrcode.png                      ║
+║                                                            ║
+║   💡 Para especificar IP manualmente:                       ║
+║      Linux/Mac:  EDUSCOPE_IP=192.168.1.100 npm start       ║
+║      Windows:    set EDUSCOPE_IP=192.168.1.100 && npm start║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
     `);
